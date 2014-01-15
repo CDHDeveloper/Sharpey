@@ -1,0 +1,29 @@
+
+
+namespace myNameSpace
+{
+
+    public class myClass
+	{
+		public int myProp;
+		public string myString = "This is a string";
+		
+		private int privProp;
+		private string privString = "This string is private";
+		
+		constructor(var var1, int var2, string var3)
+		{
+			privProp = 1;
+			myProp = 2;
+		}
+		
+		public method1()
+		{
+			object myObject = "fred";
+			if (myProp != 1)
+			{
+				console.log("something changed the myProp property";
+			}
+		}
+	}
+}

@@ -1,0 +1,18 @@
+
+
+namespace myNameSpace
+{
+
+     class myClass
+	{
+		// public var myString;
+		public function myFunc() 
+		{
+			var myInt;
+			myInt = 9;
+			if (myInt == 12) {
+				doSomething();
+			}
+		}
+	}
+}

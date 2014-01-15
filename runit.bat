@@ -1,0 +1,1 @@
+node sharpey.js  --input TestSharp7.sharp

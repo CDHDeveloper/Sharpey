@@ -1,0 +1,59 @@
+namespace DoFactory
+{
+
+  
+ /// <summary>
+  /// The 'Invoker' class
+  /// </summary>
+  public class User
+  {
+    // Initializers
+    // private Calculator _calculator = new Calculator();
+    private var _calculator = new Calculator();
+    // private List<Command> _commands = new List<Command>();
+    private var _commands = new CommandList();
+    //private int _current = 0; 				// Note: really need to get type handling in!!!
+	private var _current = 0; 
+	
+    // public void Redo(int levels) // Note: Really have to get typed parms to and return type definition
+    public function Redo(levels)
+    {
+      Console.WriteLine("\n---- Redo {0} levels ", levels);
+      // Perform redo operations
+      for (int i = 0; i < levels; i++)
+      {
+        if (_current < _commands.Count - 1)
+        {
+          var command = _commands[_current++];
+          command.Execute();
+        }
+      }
+    }
+ 
+    public function Undo(levels)
+    {
+      Console.WriteLine("\n---- Undo {0} levels ", levels);
+      // Perform undo operations
+      for (int i = 0; i < levels2; i++)
+      {
+        if (_current > 0)
+        {
+          var command = _commands[--_current]; // As Command;
+          command.UnExecute();
+        }
+      }
+    }
+ 
+    public function Compute(op, operand)
+    {
+      // Create command operation and execute it
+      var command = new CalculatorCommand(_calculator, op, operand);
+      command.Execute();
+ 
+      // Add command to undo list
+      _commands.Add(command);
+      _current++;
+    }
+  }
+}
+}

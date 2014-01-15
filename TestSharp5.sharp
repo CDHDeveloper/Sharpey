@@ -1,0 +1,303 @@
+
+namespace Standalone
+{
+	import System;
+	import System.Collections.Generic;
+	import System.Linq;
+	import System.Text;
+	import System.Windows.Data;
+	import System.Windows.Media;
+	import System.Windows.Media.Imaging;
+	import OnlineVideos;
+	import OnlineVideos.Sites;
+	import System.Windows;
+	import System.Net;
+	import System.Globalization;
+	import System.Windows.Controls;
+
+    public class ThumbnailConverter : IValueConverter
+    {
+        public function Convert(value, targetType, parameter, culture)
+        {
+            string file = ""/*string.Empty*/;
+			// if (value is string && !IsNullOrEmpty((string)value))
+			if (typeof value === 'string' && !IsNullOrEmpty(value))
+			{
+				try { 
+					if (System.IO.Path.IsPathRooted(value) && System.IO.File.Exists(value)) 
+						file = value; 
+				}
+				catch(e) { }
+			}
+            else
+            {
+                var site = value;
+                if (site == null)
+                {
+                    var siteViewModel = value;
+                    if (siteViewModel != null) 
+						site = siteViewModel.Model;
+                }
+                if (site != null)
+                {
+                    string subDir = IsNullOrEmpty(parameter) ? "Icons" : parameter;
+                    // use Icon with the same name as the Site
+                    string image = System.IO.Path.Combine(OnlineVideoSettings.Instance.ThumbsDir, subDir + "//" + site.Settings.Name + ".png");
+                    if (System.IO.File.Exists(image)) 
+						file = image;
+                    else
+                    {
+                        // if that does not exist, try icon with the same name as the Util
+                        image = System.IO.Path.Combine(OnlineVideoSettings.Instance.ThumbsDir, subDir + "//" + site.Settings.UtilName + ".png");
+                        if (System.IO.File.Exists(image)) file = image;
+                    }
+                }
+            }
+
+            if (IsNullOrEmpty(file)) 
+				return null;
+
+            // load the image, specify CacheOption so the file is not locked
+            var bitmapImage = new BitmapImage();
+            bitmapImage.BeginInit();
+            bitmapImage.CacheOption = BitmapCacheOption.OnLoad;
+            bitmapImage.UriSource = new Uri(file);
+            bitmapImage.EndInit();
+            return bitmapImage;
+        }
+
+        public function ConvertBack(value, targetType, parameter, culture)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
+    public class NullVisibilityConverter : IValueConverter
+    {
+        public function Convert(value, targetType, parameter, culture)
+        {
+            if (parameter != null)
+            {
+                if (value == null || !IsNullOrEmpty(value)) return Visibility.Hidden;
+                else return Visibility.Visible;
+            }
+            else
+            {
+                if (value == null || !IsNullOrEmpty(value)) 
+					return Visibility.Visible;
+                else 
+					return Visibility.Hidden;
+            }
+        }
+
+        public  function ConvertBack(value, targetType, parameter, culture)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
+    public class ZeroVisibilityConverter : IValueConverter
+    {
+        public function Convert(value, targetType, parameter, culture)
+        {
+            var result = Visibility.Hidden;
+
+            if (typeof value === 'int') 
+				result = value > 0 ? Visibility.Visible : Visibility.Hidden;
+            else if (typeof value === 'double') 
+				result = value > 0 ? Visibility.Visible : Visibility.Hidden;
+            else if (typeof value === 'bool') 
+				result = value ? Visibility.Visible : Visibility.Hidden;
+
+            // inverted logic
+            if (parameter != null)
+            {
+                result = result == Visibility.Hidden ? Visibility.Visible : Visibility.Hidden;
+            }
+
+            return result;
+        }
+
+        public function ConvertBack(value, targetType, parameter, culture)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
+    public class LanguageConverter : IValueConverter
+    {
+        public function Convert(value, targetType, parameter, culture)
+        {
+            if (value == null) return null;
+            string lang = value.ToString();
+            string filename = System.IO.Path.Combine(System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location), "LanguageFlags\\" + lang + ".png");
+            if (System.IO.File.Exists(filename)) return filename;
+            return null;
+        }
+
+        public function ConvertBack(value, targetType, parameter, culture)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
+    public class CategoryPathConverter : IValueConverter
+    {
+        public function Convert(value, targetType, parameter,culture)
+        {
+            string result = "";
+            var c = value;
+            while (c != null)
+            {
+                result = c.Name + (result == "" ? "" : " / ") + result;
+                c = c.ParentCategory;
+            }
+            return result;
+        }
+
+        public function ConvertBack(value, targetType, parameter,culture)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
+    public class PlayListPositionConverter : IValueConverter
+    {
+        public function Convert(value, targetType, parameter,culture)
+        {
+            string result = "";
+            var pl = value;
+            var pList = (App.Current.MainWindow).CurrentPlayList;
+            if (pList != null && pList.Count > 1)
+            {
+                int index = pList.IndexOf(pl);
+                if (index > -1) 
+					result = Format("{0} / {1}", index+1, pList.Count);
+            }
+            return result;
+        }
+
+        public function ConvertBack(value, targetType, parameter,culture)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
+	public class TranslationConverter : IValueConverter
+	{
+		public function Convert(value, targetType, parameter,culture)
+		{
+			return Translation.Instance.GetByName(parameter);
+		}
+		public function ConvertBack(value, targetType, parameter,culture)
+		{
+			throw new NotImplementedException();
+		}
+	}
+
+    public class SiteStateToBrushConverter : IValueConverter
+    {
+        public function Convert(value, targetType, parameter,culture)
+        {
+            switch (value)
+            {
+                case OnlineVideos.OnlineVideosWebservice.SiteState.Reported: return new SolidColorBrush(Color.FromArgb(80, 255, 240, 79));
+                case OnlineVideos.OnlineVideosWebservice.SiteState.Broken: return new SolidColorBrush(Color.FromArgb(60, 255, 38, 10));
+                default: return new SolidColorBrush(Colors.Transparent);
+            }
+        }
+
+        public function ConvertBack(value, targetType,  parameter,culture)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
+    public class SiteStateToImageConverter : IValueConverter
+    {
+        public function Convert(value, targetType,  parameter,culture)
+        {
+            switch (value)
+            {
+                case OnlineVideos.OnlineVideosWebservice.SiteState.Reported:
+                    return new BitmapImage(new Uri("pack://application:,,,/Images/Warning.png"));
+                case OnlineVideos.OnlineVideosWebservice.SiteState.Broken:
+                    return new BitmapImage(new Uri("pack://application:,,,/Images/Stop.png"));
+                default:
+                    return new BitmapImage(new Uri("pack://application:,,,/Images/OK.png"));
+            }
+        }
+
+        public function ConvertBack(value, targetType, parameter,culture)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
+    public class SiteVisibilityConverter : IValueConverter
+    {
+        public function Convert(value, targetType, parameter, culture)
+        {
+            var lvItem  = (value);
+            var onlineSite = (lvItem.DataContext).Model;
+            // var ss = OnlineVideoSettings.Instance.SiteSettingsList.FirstOrDefault(i => i.Name == onlineSite.Name);
+			var ss = "";
+            if ((parameter) == "Add")
+            {
+                if (ss != null) 
+					return Visibility.Hidden;
+                else 
+					return Visibility.Visible;
+            }
+            else
+            {
+                if (ss != null) 
+					return Visibility.Visible;
+                else 
+					return Visibility.Hidden;
+            }
+        }
+
+        public function ConvertBack(value, targetType, parameter, culture)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
+    public class LongToDateTimeConverter : IValueConverter
+    {
+        public function Convert(value, targetType, parameter,culture)
+        {
+            return new DateTime(value).ToString(parameter);
+        }
+
+        public function ConvertBack(value, targetType, parameter,culture)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
+    public class BufferPercentConverter : IValueConverter
+    {
+        public function Convert(value, targetType, parameter,culture)
+        {
+            // format the percentage nicely depeding on range
+            float percent = value;
+            string formatString = "###";
+            if (percent == 0) // actually 0f
+				return ""; //formatString = "0.0";
+            else if (percent < 1) 
+				formatString = ".00";
+            else if (percent < 10) 
+				formatString = "0.0";
+            else if (percent < 100) 
+				formatString = "##";
+            return Format("{0} {1} %", Translation.Instance.Buffered, percent.ToString(formatString, System.Globalization.CultureInfo.InvariantCulture));
+        }
+
+        public function ConvertBack(value, targetType, parameter, culture)
+        {
+            throw new NotImplementedException();
+        }
+    }
+}
